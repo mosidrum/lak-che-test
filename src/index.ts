@@ -7,6 +7,7 @@ import {logger} from "./services";
 import {errorHandler, responseLogger} from "./middleware";
 import homepageRoute from "./routes/homepage.route";
 import {HTTP_STATUS} from "./lib";
+import routes from "./routes";
 
 const {PORT} = envConfig
 
@@ -25,6 +26,7 @@ export const main = async () => {
         app.use(helmet());
         app.use(responseLogger)
         app.use('/', homepageRoute)
+        app.use('/api/v1', routes);
 
         app.use((req, res) =>
           res.status(HTTP_STATUS.NOT_FOUND).send({
