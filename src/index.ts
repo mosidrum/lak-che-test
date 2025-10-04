@@ -6,6 +6,7 @@ import envConfig from "./config/envConfig";
 import {logger} from "./services";
 import {responseLogger} from "./middleware";
 import homepageRoute from "./routes/homepage.route";
+import {HTTP_STATUS} from "./lib";
 
 const {PORT} = envConfig
 
@@ -24,6 +25,12 @@ export const main = async () => {
         app.use(helmet());
         app.use(responseLogger)
         app.use('/', homepageRoute)
+
+        app.use((req, res) =>
+          res.status(HTTP_STATUS.NOT_FOUND).send({
+              message: `This route does not exist: [${req.method}] ${req.url}`
+          })
+        );
 
         app.listen(PORT, () => {
             logger.info(`Server listening on port http://localhost:${PORT}`);
