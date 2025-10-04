@@ -4,7 +4,7 @@ import AppDataSource from "./data-source";
 import helmet from "helmet";
 import envConfig from "./config/envConfig";
 import {logger} from "./services";
-import {responseLogger} from "./middleware";
+import {errorHandler, responseLogger} from "./middleware";
 import homepageRoute from "./routes/homepage.route";
 import {HTTP_STATUS} from "./lib";
 
@@ -31,6 +31,8 @@ export const main = async () => {
               message: `This route does not exist: [${req.method}] ${req.url}`
           })
         );
+
+        app.use(errorHandler)
 
         app.listen(PORT, () => {
             logger.info(`Server listening on port http://localhost:${PORT}`);
