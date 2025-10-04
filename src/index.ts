@@ -4,8 +4,11 @@ import AppDataSource from "./data-source";
 import helmet from "helmet";
 import envConfig from "./config/envConfig";
 import {logger} from "./services";
+import {responseLogger} from "./middleware";
+import homepageRoute from "./routes/homepage.route";
 
 const {PORT} = envConfig
+
 export const main = async () => {
     try {
         try {
@@ -19,6 +22,8 @@ export const main = async () => {
         app.use(express.urlencoded({ extended: true }));
         app.use(cors());
         app.use(helmet());
+        app.use(responseLogger)
+        app.use('/', homepageRoute)
 
         app.listen(PORT, () => {
             logger.info(`Server listening on port http://localhost:${PORT}`);
