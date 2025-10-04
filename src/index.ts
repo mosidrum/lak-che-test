@@ -1,18 +1,30 @@
 import express from "express";
+import cors from 'cors';
 import AppDataSource from "./data-source";
+import helmet from "helmet";
 
-const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
-app.use(express.json());
+export const main = async () => {
+    try {
+        try {
+            await AppDataSource.initialize();
+            console.log('Database connection established successfully 🚀');
+        } catch (error) {
+            console.log('Failed to initialize AppDataSource',error);
+        }
+        const app = express();
+        app.use(express.json());
+        app.use(express.urlencoded({ extended: true }));
+        app.use(cors());
+        app.use(helmet());
 
-AppDataSource.initialize()
-    .then(() => {
-        console.log("Database connected successfully here ✅");
         app.listen(PORT, () => {
-            console.log(`Server is listening on port http://localhost:${PORT}`);
+            console.log(`Server listening on port http://localhost:${PORT}`);
         });
-    })
-    .catch((err) => {
-        console.error("Database connection error ❌", err);
-    });
+    } catch (error) {
+        console.log('Failed to initialize app',error);
+    }
+}
+
+main();
