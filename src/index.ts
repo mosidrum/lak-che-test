@@ -2,9 +2,9 @@ import express from "express";
 import cors from 'cors';
 import AppDataSource from "./data-source";
 import helmet from "helmet";
+import envConfig from "./config/envConfig";
 
-const PORT = process.env.PORT || 5001;
-
+const {PORT} = envConfig
 export const main = async () => {
     try {
         try {
