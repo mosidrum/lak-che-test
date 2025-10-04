@@ -62,31 +62,6 @@ This will start:
 
 ---
 
-## 📖 API Example
-
-### Create User
-**POST** `/users`
-
-#### Request Body
-```json
-{
-  "name": "John Doe",
-  "email": "john@example.com"
-}
-```
-
-#### Response
-```json
-{
-  "id": 1,
-  "name": "John Doe",
-  "email": "john@example.com",
-  "createdAt": "2025-10-04T12:00:00.000Z"
-}
-```
-
----
-
 ## 🛠 Scripts
 - `yarn dev` → Run with nodemon (development mode)
 - `yarn build` → Compile TypeScript to JavaScript
