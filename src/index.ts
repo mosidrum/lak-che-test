@@ -3,15 +3,16 @@ import cors from 'cors';
 import AppDataSource from "./data-source";
 import helmet from "helmet";
 import envConfig from "./config/envConfig";
+import {logger} from "./services";
 
 const {PORT} = envConfig
 export const main = async () => {
     try {
         try {
             await AppDataSource.initialize();
-            console.log('Database connection established successfully 🚀');
+            logger.info('Database connection established successfully 🚀');
         } catch (error) {
-            console.log('Failed to initialize AppDataSource',error);
+            logger.error('Failed to initialize AppDataSource',error);
         }
         const app = express();
         app.use(express.json());
@@ -20,10 +21,10 @@ export const main = async () => {
         app.use(helmet());
 
         app.listen(PORT, () => {
-            console.log(`Server listening on port http://localhost:${PORT}`);
+            logger.info(`Server listening on port http://localhost:${PORT}`);
         });
     } catch (error) {
-        console.log('Failed to initialize app',error);
+        logger.error('Failed to initialize app',error);
     }
 }
 
