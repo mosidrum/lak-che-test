@@ -1,68 +1,27 @@
-import {Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, OneToMany, UpdateDateColumn} from "typeorm";
-import {BookingEntity} from "./BookingEntity";
-import {CarEntity} from "./CarEntity";
-import {EmailVerificationEntity} from "./EmailVerificationEntity";
-
-export enum UserRole {
-  OWNER = 'owner',
-  RENTER = 'renter',
-  ADMIN = 'admin',
-  RENTAL_USER = 'rental_user'
-}
+import {Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, OneToMany } from "typeorm";
+import {AccessPin} from "./AccessPinEntity";
+import {Property} from "./PropertyEntity";
 
 @Entity()
-export class UserEntity {
+export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column()
-  fullName: string;
+  name: string;
 
   @Column({ unique: true })
-  email: string;
+  phoneNumber: string;
 
-  @Column({ unique: true })
-  phone: string;
+  @Column({ type: 'enum', enum: ['OWNER', 'GUEST'] })
+  role: 'OWNER' | 'GUEST';
 
-  @Column()
-  password: string;
+  @OneToMany(() => Property, (property) => property.owner)
+  properties: Property[];
 
-  @Column({ type: 'enum', enum: UserRole })
-  role: UserRole;
-
-  @Column({ nullable: true })
-  idDocumentUrl: string;
-
-  @Column({ default: false })
-  isVerified: boolean;
-
-  @Column({ default: false })
-  isEmailVerified: boolean;
-
-  @Column({ default: false })
-  isApproved: boolean;
-
-  @Column({ default: false })
-  documentsSubmitted: boolean;
-
-  @Column({ type: 'text', default: '[]' })
-  documents: string;
-
-  @Column({ default: false })
-  isSuspended: boolean;
-
-  @OneToMany(() => CarEntity, car => car.owner)
-  cars: CarEntity[];
-
-  @OneToMany(() => BookingEntity, booking => booking.renter)
-  bookings: BookingEntity[];
-
-  @OneToMany(() => EmailVerificationEntity, verification => verification.user)
-  emailVerifications: EmailVerificationEntity[];
+  @OneToMany(() => AccessPin, (pin) => pin.guest)
+  accessPins: AccessPin[];
 
   @CreateDateColumn()
   createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }
