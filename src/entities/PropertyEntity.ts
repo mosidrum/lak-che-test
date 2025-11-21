@@ -21,6 +21,9 @@ export class Property {
     address: string;
 
     @Column()
+    image: string;
+
+    @Column()
     qrCode: string;
 
     @ManyToOne(() => User, (user) => user.properties)
