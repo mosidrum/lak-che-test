@@ -3,6 +3,6 @@
   "ext": "ts,json",
   "ignore": ["dist", "node_modules"],
   "exec": "ts-node src/index.ts",
-  "verbose": true,
-  "legacyWatch": true
+  "verbose": false,
+  "legacyWatch": false
 }

@@ -1,2 +1,5 @@
 export * from './UserEntity'
+export * from './CarEntity'
+export * from './BookingEntity'
+export * from './PaymentEntity'
 export * from './entityUtils'

@@ -4,7 +4,6 @@ import { HTTP_STATUS } from '../lib';
 
 export const responseLogger = (req: Request, res: Response, next: NextFunction) => {
     const startTime = Date.now();
-    logger.info(`API request received: ${req.method} ${req.path}`);
 
     let responseBody: unknown;
     const originalSend = res.send;
@@ -29,7 +28,16 @@ export const responseLogger = (req: Request, res: Response, next: NextFunction) 
             ? (responseBody as { message: string }).message
             : 'API response sent';
 
-        logger[logLevel](`${responseMessage} - Status: ${res.statusCode} - Response time: ${responseTime}ms`);
+        const summary = `${req.method} ${req.originalUrl} → ${res.statusCode} (${responseTime}ms)`;
+        const message =
+          logLevel === 'info'
+              ? summary
+              : `${summary} :: ${responseMessage}`;
+
+        logger[logLevel]({
+            message,
+            location: 'responseLogger'
+        });
     });
 
     next();
