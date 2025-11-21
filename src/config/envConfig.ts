@@ -13,6 +13,7 @@ type EnvConfig = {
     POSTGRES_PORT: number
     NODE_ENV: string;
     LOG_LEVEL: string;
+    JWT_SECRET: string;
 };
 
 type ENV = Partial<EnvConfig> & {
@@ -31,7 +32,8 @@ const getConfig = (): ENV => ({
     POSTGRES_DB: process.env.POSTGRES_DB,
     POSTGRES_PORT: Number(process.env.POSTGRES_PORT),
     NODE_ENV: process.env.NODE_ENV,
-    LOG_LEVEL: process.env.LOG_LEVEL
+    LOG_LEVEL: process.env.LOG_LEVEL,
+    JWT_SECRET: process.env.JWT_SECRET
 });
 
 const getSanitizedConfig = (config: ENV): EnvConfig => {

@@ -1,6 +1,6 @@
 import express from "express";
 import cors from 'cors';
-import AppDataSource from "./data-source";
+import AppDataSource from "./database/data-source";
 import helmet from "helmet";
 import envConfig from "./config/envConfig";
 import {logger} from "./services";

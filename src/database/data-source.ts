@@ -1,8 +1,8 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
 import dotenv from "dotenv";
-import {AccessPin, Door, Property, User} from "./entities";
-import {CallLog} from "./entities/CallLogEntity";
+import {AccessPin, Door, Property, User} from "../entities";
+import {CallLog} from "../entities/CallLogEntity";
 
 dotenv.config();
 

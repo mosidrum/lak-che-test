@@ -1,16 +1,16 @@
 import { body } from 'express-validator';
 
 export const registerValidation = [
-    body('fullName')
-        .exists().withMessage('Full name is required')
-        .isString().withMessage('Full name must be a string')
+    body('name')
+        .exists().withMessage('name is required')
+        .isString().withMessage('name must be a string')
         .trim()
-        .notEmpty().withMessage('Full name cannot be empty'),
+        .notEmpty().withMessage('name cannot be empty'),
     body('email')
         .exists().withMessage('Email is required')
         .isEmail().withMessage('Email must be valid')
         .normalizeEmail(),
-    body('phone')
+    body('phoneNumber')
         .exists().withMessage('Phone number is required')
         .isString().withMessage('Phone number must be a string')
         .trim()
