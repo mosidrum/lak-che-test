@@ -1,12 +1,57 @@
-import {body} from "express-validator";
+import { body } from 'express-validator';
+import { UserRole } from '../../entities';
 
 export const createUserValidation = [
-  body('email').exists().withMessage('email is required').isEmail().withMessage('This must be a proper email address'),
-  body('name')
-    .exists()
-    .withMessage('Name is required')
-    .notEmpty()
-    .withMessage('Name cannot be empty')
-    .isString()
-    .withMessage('Name must be a string'),
-]
+    body('fullName')
+        .exists().withMessage('Full name is required')
+        .isString().withMessage('Full name must be a string')
+        .trim()
+        .notEmpty().withMessage('Full name cannot be empty'),
+    body('email')
+        .exists().withMessage('Email is required')
+        .isEmail().withMessage('Email must be valid')
+        .normalizeEmail(),
+    body('phone')
+        .exists().withMessage('Phone number is required')
+        .isString().withMessage('Phone number must be a string')
+        .trim()
+        .notEmpty().withMessage('Phone number cannot be empty'),
+    body('password')
+        .exists().withMessage('Password is required')
+        .isLength({ min: 8 }).withMessage('Password must be at least 8 characters long'),
+    body('role')
+        .optional()
+        .isIn(Object.values(UserRole))
+        .withMessage(`Role must be one of: ${Object.values(UserRole).join(', ')}`)
+];
+
+export const loginValidation = [
+    body('email')
+        .exists().withMessage('Email is required')
+        .isEmail().withMessage('Email must be valid')
+        .normalizeEmail(),
+    body('password')
+        .exists().withMessage('Password is required')
+        .isString().withMessage('Password must be a string')
+        .notEmpty().withMessage('Password cannot be empty')
+];
+
+export const changePasswordValidation = [
+    body('email')
+        .exists().withMessage('Email is required')
+        .isEmail().withMessage('Email must be valid')
+        .normalizeEmail(),
+    body('currentPassword')
+        .exists().withMessage('Current password is required')
+        .isString().withMessage('Current password must be a string')
+        .notEmpty().withMessage('Current password cannot be empty'),
+    body('newPassword')
+        .exists().withMessage('New password is required')
+        .isLength({ min: 8 }).withMessage('New password must be at least 8 characters long')
+        .custom((value, { req }) => {
+            if (value === req.body.currentPassword) {
+                throw new Error('New password must be different from the current password');
+            }
+            return true;
+        })
+];

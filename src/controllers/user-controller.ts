@@ -1,24 +1,50 @@
 import { Request, Response } from 'express';
-import { handleGetRepository, UserEntity } from '../entities';
+import bcrypt from 'bcryptjs';
+import { handleGetRepository, UserEntity, UserRole } from '../entities';
 import { BadRequestError, HTTP_STATUS } from '../lib';
 
+const SALT_ROUNDS = 10;
+
+export const sanitizeUser = (user: UserEntity) => {
+    const { password, ...rest } = user;
+    return rest;
+};
+
 export const createUser = async (req: Request, res: Response) => {
-    const { name, email } = req.body;
+    const {
+        fullName,
+        email,
+        phone,
+        password,
+        role = UserRole.RENTER
+    } = req.body;
+
     const userRepository = handleGetRepository(UserEntity);
 
-    const user= await userRepository.findOne({ where: { email } });
+    const existingUser = await userRepository.findOne({
+        where: [{ email }, { phone }]
+    });
 
-    if (user) {
-        throw new BadRequestError('A user with this email already exists');
+    if (existingUser) {
+        throw new BadRequestError('A user with this email or phone already exists');
     }
 
-    const newUser = userRepository.create({ name, email });
-    await userRepository.save(newUser);
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+    const newUser = userRepository.create({
+        fullName,
+        email,
+        phone,
+        password: hashedPassword,
+        role
+    });
+    const savedUser = await userRepository.save(newUser);
 
     const response = {
         message: 'User created successfully',
-        data: newUser
+        data: sanitizeUser(savedUser)
     };
 
     res.status(HTTP_STATUS.CREATED).send(response);
 };
+
