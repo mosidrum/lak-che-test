@@ -1,7 +1,6 @@
 import { body } from 'express-validator';
-import { UserRole } from '../../entities';
 
-export const createUserValidation = [
+export const registerValidation = [
     body('fullName')
         .exists().withMessage('Full name is required')
         .isString().withMessage('Full name must be a string')
@@ -18,11 +17,18 @@ export const createUserValidation = [
         .notEmpty().withMessage('Phone number cannot be empty'),
     body('password')
         .exists().withMessage('Password is required')
-        .isLength({ min: 8 }).withMessage('Password must be at least 8 characters long'),
-    body('role')
-        .optional()
-        .isIn(Object.values(UserRole))
-        .withMessage(`Role must be one of: ${Object.values(UserRole).join(', ')}`)
+        .isLength({ min: 8 }).withMessage('Password must be at least 8 characters long')
+];
+
+export const verifyEmailValidation = [
+    body('email')
+        .exists().withMessage('Email is required')
+        .isEmail().withMessage('Email must be valid')
+        .normalizeEmail(),
+    body('otp')
+        .exists().withMessage('Verification code is required')
+        .isLength({ min: 4 }).withMessage('Verification code must be at least 4 characters long')
+        .isString().withMessage('Verification code must be a string')
 ];
 
 export const loginValidation = [

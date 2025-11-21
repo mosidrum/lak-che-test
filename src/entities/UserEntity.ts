@@ -1,11 +1,13 @@
 import {Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, OneToMany, UpdateDateColumn} from "typeorm";
 import {BookingEntity} from "./BookingEntity";
 import {CarEntity} from "./CarEntity";
+import {EmailVerificationEntity} from "./EmailVerificationEntity";
 
 export enum UserRole {
   OWNER = 'owner',
   RENTER = 'renter',
-  ADMIN = 'admin'
+  ADMIN = 'admin',
+  RENTAL_USER = 'rental_user'
 }
 
 @Entity()
@@ -34,11 +36,29 @@ export class UserEntity {
   @Column({ default: false })
   isVerified: boolean;
 
+  @Column({ default: false })
+  isEmailVerified: boolean;
+
+  @Column({ default: false })
+  isApproved: boolean;
+
+  @Column({ default: false })
+  documentsSubmitted: boolean;
+
+  @Column({ type: 'text', default: '[]' })
+  documents: string;
+
+  @Column({ default: false })
+  isSuspended: boolean;
+
   @OneToMany(() => CarEntity, car => car.owner)
   cars: CarEntity[];
 
   @OneToMany(() => BookingEntity, booking => booking.renter)
   bookings: BookingEntity[];
+
+  @OneToMany(() => EmailVerificationEntity, verification => verification.user)
+  emailVerifications: EmailVerificationEntity[];
 
   @CreateDateColumn()
   createdAt: Date;
