@@ -104,7 +104,8 @@ export default [
             '@typescript-eslint/no-namespace': 'off',
 
             indent: 'off',
-            'react/jsx-filename-extension': 'off'
+            'react/jsx-filename-extension': 'off',
+            'unicorn/no-array-callback-reference': 'off'
         }
     }
 ];
