@@ -23,6 +23,9 @@ export class Property {
     @Column()
     image: string;
 
+    @Column({ default: true })
+    isAvailable: boolean;
+
     @Column()
     qrCode: string;
 

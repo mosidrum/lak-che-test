@@ -49,6 +49,7 @@ export const addProperty = async (req: IExtendedRequest, res: Response) => {
                 address: savedProperty.address,
                 image: savedProperty.image,
                 qrCode: savedProperty.qrCode,
+                isAvailable: savedProperty.isAvailable,
                 owner: {
                     id: owner.id,
                     name: owner.name,
