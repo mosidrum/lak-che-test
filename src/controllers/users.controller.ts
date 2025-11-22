@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import {BadRequestError, BcryptHelper, HTTP_STATUS, JwtHelper, JwtPayload} from "../lib";
-import {UserRepository} from "../repository/UserRepository";
+import {UserRepository} from "../repository";
 
 export const register = async (req: Request, res: Response) => {
     const { name, email, password, phoneNumber } = req.body;

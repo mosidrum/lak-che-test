@@ -1,8 +1,7 @@
 import {IExtendedRequest} from "../middleware";
 import { Response } from 'express';
 import { BadRequestError, HTTP_STATUS } from '../lib';
-import { PropertyRepository } from '../repository/PropertyRepository';
-import { UserRepository } from '../repository/UserRepository';
+import { PropertyRepository, UserRepository } from '../repository';
 import QRCode from 'qrcode';
 
 export const addProperty = async (req: IExtendedRequest, res: Response) => {
