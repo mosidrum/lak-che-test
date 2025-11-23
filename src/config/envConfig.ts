@@ -14,6 +14,9 @@ type EnvConfig = {
     NODE_ENV: string;
     LOG_LEVEL: string;
     JWT_SECRET: string;
+    TWILIO_SID: string;
+    TWILIO_AUTH_TOKEN: string;
+    TWILIO_PHONE_NUMBER: string;
 };
 
 type ENV = Partial<EnvConfig> & {
@@ -33,7 +36,10 @@ const getConfig = (): ENV => ({
     POSTGRES_PORT: Number(process.env.POSTGRES_PORT),
     NODE_ENV: process.env.NODE_ENV,
     LOG_LEVEL: process.env.LOG_LEVEL,
-    JWT_SECRET: process.env.JWT_SECRET
+    JWT_SECRET: process.env.JWT_SECRET,
+    TWILIO_SID: process.env.TWILIO_SID,
+    TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN,
+    TWILIO_PHONE_NUMBER: process.env.TWILIO_PHONE_NUMBER,
 });
 
 const getSanitizedConfig = (config: ENV): EnvConfig => {

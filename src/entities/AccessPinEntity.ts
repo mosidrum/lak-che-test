@@ -4,7 +4,6 @@ import {
     Column,
     ManyToOne,
 } from 'typeorm';
-import {User} from "./UserEntity";
 import {Property} from "./PropertyEntity";
 import {Door} from "./DoorEntity";
 import {Guest} from "./GuestEntity";

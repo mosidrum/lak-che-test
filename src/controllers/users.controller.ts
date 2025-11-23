@@ -1,9 +1,13 @@
-import { Request, Response } from 'express';
+import {Request, Response} from 'express';
 import {BadRequestError, BcryptHelper, HTTP_STATUS, JwtHelper, JwtPayload} from "../lib";
 import {AccessPinRepository, DoorRepository, GuestRepository, PropertyRepository, UserRepository} from "../repository";
 import {IExtendedRequest} from "../middleware";
 import QRCode from "qrcode";
 import {pinGenerator} from "../utils";
+import {sendWhatsAppMessage} from "../services";
+import AppDataSource from "../database/data-source";
+import { v4 as uuidv4 } from 'uuid';
+
 
 export const register = async (req: Request, res: Response) => {
     const { name, email, password, phoneNumber } = req.body;
@@ -77,40 +81,32 @@ export const addProperty = async (req: IExtendedRequest, res: Response) => {
     const owner = await userRepository.findById(ownerId);
     if (!owner) throw new BadRequestError('Owner not found');
 
-    const qrCodeData = JSON.stringify({
-        propertyName: name,
-        address,
-        ownerId,
-        timestamp: new Date().toISOString()
+    const { savedProperty, savedDoor } = await AppDataSource.transaction(async (manager) => {
+        const newProperty = propertyRepository.create({ name, address, image, owner });
+        const savedProperty = await manager.save(newProperty);
+
+        const qrCodeData = JSON.stringify({
+            propertyId: savedProperty.id,
+            propertyName: name,
+            address,
+            ownerId,
+            timestamp: new Date().toISOString()
+        });
+        savedProperty.qrCode = await QRCode.toDataURL(qrCodeData);
+        await manager.save(savedProperty);
+
+        const newDoor = doorRepository.create({
+            name: doorName || 'Main Garage Door',
+            lockId: `LOCK-${uuidv4()}`,
+            property: savedProperty
+        });
+        const savedDoor = await manager.save(newDoor);
+
+        savedProperty.door = savedDoor;
+        await manager.save(savedProperty);
+
+        return { savedProperty, savedDoor };
     });
-
-    let qrCode: string;
-    try {
-        qrCode = await QRCode.toDataURL(qrCodeData);
-    } catch {
-        throw new BadRequestError('Failed to generate QR code');
-    }
-
-    const newProperty = propertyRepository.create({
-        name,
-        address,
-        image,
-        qrCode,
-        owner
-    });
-
-    const savedProperty = await propertyRepository.save(newProperty);
-
-    const newDoor = doorRepository.create({
-        name: doorName || 'Main Garage Door',
-        lockId: `LOCK-${Date.now()}`,
-        property: savedProperty,
-    });
-
-    const savedDoor = await doorRepository.save(newDoor);
-
-    savedProperty.door = savedDoor;
-    await propertyRepository.save(savedProperty);
 
     res.status(HTTP_STATUS.CREATED).json({
         message: 'Property and door created successfully',
@@ -121,85 +117,84 @@ export const addProperty = async (req: IExtendedRequest, res: Response) => {
                 address: savedProperty.address,
                 image: savedProperty.image,
                 qrCode: savedProperty.qrCode,
-                isAvailable: savedProperty.isAvailable,
-                owner: {
-                    id: owner.id,
-                    name: owner.name,
-                    email: owner.email
-                },
-                door: {
-                    id: savedDoor.id,
-                    name: savedDoor.name,
-                    lockId: savedDoor.lockId
-                }
+                owner: { id: owner.id, name: owner.name, email: owner.email },
+                door: { id: savedDoor.id, name: savedDoor.name, lockId: savedDoor.lockId }
             }
         }
     });
 };
 
-export const approveLetting = async (req: IExtendedRequest, res: Response) => {
-    const { propertyId, guestId } = req.body;
-    const ownerId = req.user.id;
+export const addGuestToProperty = async (req: IExtendedRequest, res: Response) => {
+    const { propertyId, phoneNumber, ssn } = req.body;
+    if (!propertyId || !phoneNumber) throw new BadRequestError('propertyId and phoneNumber are required');
 
-    const propertyRepo = new PropertyRepository();
-    const guestRepo = new GuestRepository();
-    const pinRepo = new AccessPinRepository();
+    const propertyRepository = new PropertyRepository();
+    const guestRepository = new GuestRepository();
 
-    const property = await propertyRepo.findOne({
-        where: {
-            id: propertyId,
-            owner: { id: ownerId }
-        },
-        relations: ['door']
-    });
+    const property = await propertyRepository.findById(propertyId);
+    if (!property) throw new BadRequestError('Property not found');
 
-    if (!property) throw new BadRequestError('Property not found or not owned by you');
-    if (!property.isAvailable) throw new BadRequestError('Property already occupied');
-
-    const door = property.door;
-    if (!door) throw new BadRequestError('No door attached to this property');
-
-    const guest = await guestRepo.findOne({
-        where: {
-            id: guestId,
-            property: { id: propertyId }
-        },
+    let guest = await guestRepository.findOne({
+        where: { phoneNumber, property: { id: propertyId } },
         relations: ['property']
     });
 
-    if (!guest) throw new BadRequestError('Guest not associated with this property');
+    if (!guest) {
+        guest = guestRepository.create({ phoneNumber, property, ssn });
+        guest = await guestRepository.save(guest);
+    }
 
-    await pinRepo.update(
-      { door: { id: door.id }, status: 'ACTIVE' },
-      { status: 'EXPIRED' }
-    );
-
-    const pinCode = pinGenerator();
-
-    const validFrom = new Date();
-    const validUntil = new Date(Date.now() + 5 * 60 * 1000);
-
-    const accessPin = pinRepo.create({
-        pinCode,
-        property,
-        guest,
-        door,
-        validFrom,
-        validUntil,
-        status: 'ACTIVE'
-    });
-
-    await pinRepo.save(accessPin);
-
-    property.isAvailable = false;
-    await propertyRepo.save(property);
-
-    return res.status(200).json({
-        message: 'Property approved and access PIN generated',
-        data: {
-            pin: pinCode,
-            validUntil
-        }
+    res.status(HTTP_STATUS.CREATED).json({
+        message: 'Guest added to property successfully',
+        data: { guest: { id: guest.id, phoneNumber: guest.phoneNumber } }
     });
 };
 
+export const approveGuest = async (req: IExtendedRequest, res: Response) => {
+    const { propertyId, guestId } = req.body;
+    const ownerId = req.user.id;
+
+    await AppDataSource.transaction(async () => {
+        const propertyRepo = new PropertyRepository();
+        const guestRepo = new GuestRepository();
+        const pinRepo = new AccessPinRepository();
+
+        const property = await propertyRepo.findOne({
+            where: { id: propertyId, owner: { id: ownerId } },
+            relations: ['door']
+        });
+        if (!property) throw new BadRequestError('Property not found or not owned by you');
+
+        const door = property.door;
+        if (!door) throw new BadRequestError('No door attached to this property');
+
+        const guest = await guestRepo.findOne({
+            where: { id: guestId, property: { id: propertyId } },
+            relations: ['property']
+        });
+        if (!guest) throw new BadRequestError('Guest not associated with this property');
+
+        await pinRepo.update({ door: { id: door.id }, status: 'ACTIVE' }, { status: 'EXPIRED' });
+
+        const pinCode = pinGenerator();
+        const validFrom = new Date();
+        const validUntil = new Date(Date.now() + 5 * 60 * 1000);
+
+        const accessPin = pinRepo.create({
+            pinCode, property, guest, door, validFrom, validUntil, status: 'ACTIVE'
+        });
+        await pinRepo.save(accessPin);
+
+        await propertyRepo.save(property);
+
+        if (guest.phoneNumber) {
+            const message = `Hello! Your access PIN for ${property.name} is ${pinCode}. It expires at ${validUntil.toLocaleTimeString()}.`;
+            await sendWhatsAppMessage(guest.phoneNumber, message);
+        }
+
+        res.status(200).json({
+            message: 'Guest approved and access PIN generated',
+            data: { pin: pinCode, validUntil }
+        });
+    });
+};

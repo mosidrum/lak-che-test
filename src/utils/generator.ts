@@ -6,10 +6,5 @@ export const otpGenerator = (length = 6): string => {
     return random.toString().padStart(length, '0');
 };
 
-export const pinGenerator = (length: number = 6): string => {
-    let pin = '';
-    for (let i = 0; i < length; i++) {
-        pin += crypto.randomInt(0, 10).toString();
-    }
-    return pin;
-};
+export const pinGenerator = () => crypto.randomInt(1000, 10_000).toString();
+

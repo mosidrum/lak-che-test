@@ -24,10 +24,7 @@ export class Property {
     @Column()
     image: string;
 
-    @Column({ default: true })
-    isAvailable: boolean;
-
-    @Column()
+    @Column({ nullable: true })
     qrCode: string;
 
     @ManyToOne(() => User, (user) => user.properties)

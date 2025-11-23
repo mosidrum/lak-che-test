@@ -1,5 +1,4 @@
 import {Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, OneToMany } from "typeorm";
-import {AccessPin} from "./AccessPinEntity";
 import {Property} from "./PropertyEntity";
 
 @Entity()
