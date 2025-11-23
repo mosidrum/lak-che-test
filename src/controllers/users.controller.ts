@@ -145,7 +145,6 @@ export const approveLetting = async (req: IExtendedRequest, res: Response) => {
     const guestRepo = new GuestRepository();
     const pinRepo = new AccessPinRepository();
 
-    // Load property with its door
     const property = await propertyRepo.findOne({
         where: {
             id: propertyId,
@@ -160,30 +159,26 @@ export const approveLetting = async (req: IExtendedRequest, res: Response) => {
     const door = property.door;
     if (!door) throw new BadRequestError('No door attached to this property');
 
-    // Load guest and ensure they belong to this property
     const guest = await guestRepo.findOne({
         where: {
             id: guestId,
             property: { id: propertyId }
         },
-        relations: ['property'] // ensure guest.property is loaded
+        relations: ['property']
     });
 
     if (!guest) throw new BadRequestError('Guest not associated with this property');
 
-    // Expire any existing active PINs for this door
     await pinRepo.update(
       { door: { id: door.id }, status: 'ACTIVE' },
       { status: 'EXPIRED' }
     );
 
-    // Generate new secure PIN
     const pinCode = pinGenerator();
 
     const validFrom = new Date();
-    const validUntil = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+    const validUntil = new Date(Date.now() + 5 * 60 * 1000);
 
-    // Create access pin using fully loaded entity objects
     const accessPin = pinRepo.create({
         pinCode,
         property,
@@ -196,7 +191,6 @@ export const approveLetting = async (req: IExtendedRequest, res: Response) => {
 
     await pinRepo.save(accessPin);
 
-    // Mark property as unavailable
     property.isAvailable = false;
     await propertyRepo.save(property);
 
