@@ -4,7 +4,7 @@ import {AccessPinRepository, DoorRepository, GuestRepository, PropertyRepository
 import {IExtendedRequest} from "../middleware";
 import QRCode from "qrcode";
 import {pinGenerator} from "../utils";
-import {createVideoRoom, sendWhatsAppMessage} from "../services";
+import { createVideoRoom, sendWhatsAppMessage} from "../services";
 import AppDataSource from "../database/data-source";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -179,21 +179,13 @@ export const approveGuest = async (req: IExtendedRequest, res: Response) => {
                 throw new BadRequestError('Phone number required to initiate verification call');
             }
 
-            const roomName = `verify-${propertyId}-${Date.now()}`;
-
-            await createVideoRoom(roomName);
-
-            const ownerMessage = `
-A guest is requesting access to ${property.name}.
-A video verification call has been initiated.
-Room: ${roomName}
-      `;
-
-            await sendWhatsAppMessage(phoneNumber, ownerMessage);
+            await sendWhatsAppMessage(
+              phoneNumber,
+              'You are being verified. Please tap the call button to speak with the property owner.'
+            );
 
             res.status(200).json({
-                message: 'Guest not found. Video verification initiated.',
-                data: { verificationRoom: roomName }
+                message: 'Guest not found. Guest prompted to make a call to owner.',
             });
 
             return;
