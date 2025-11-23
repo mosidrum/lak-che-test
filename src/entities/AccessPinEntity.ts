@@ -17,7 +17,7 @@ export class AccessPin {
     @Column()
     pinCode: string;
 
-    @ManyToOne(() => User, (user) => user.accessPins)
+    @ManyToOne(() => Guest, (guest) => guest.accessPins)
     guest: Guest;
 
     @ManyToOne(() => Property)

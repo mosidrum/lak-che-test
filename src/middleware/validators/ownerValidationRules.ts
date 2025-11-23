@@ -16,3 +16,8 @@ export const addPropertyValidation = [
     .isString()
     .withMessage('Property image must be a string'),
 ]
+
+export const approvePropertyValidation = [
+    body('propertyId').notEmpty().withMessage('Property ID is required').isUUID().withMessage('Property ID must be a valid UUID').isString().withMessage('Property ID must be a string'),
+  body('guestId').notEmpty().withMessage('Guest ID is required').isUUID().withMessage('Guest ID must be a valid UUID').isString().withMessage('Guest ID must be a string')
+]

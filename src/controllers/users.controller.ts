@@ -139,37 +139,51 @@ export const addProperty = async (req: IExtendedRequest, res: Response) => {
 
 export const approveLetting = async (req: IExtendedRequest, res: Response) => {
     const { propertyId, guestId } = req.body;
-    const { user } = req;
+    const ownerId = req.user.id;
 
     const propertyRepo = new PropertyRepository();
     const guestRepo = new GuestRepository();
     const pinRepo = new AccessPinRepository();
 
+    // Load property with its door
     const property = await propertyRepo.findOne({
         where: {
             id: propertyId,
-            owner: { id: user.id }
-        }
+            owner: { id: ownerId }
+        },
+        relations: ['door']
     });
 
-    if (!property) throw new BadRequestError('Property not found');
+    if (!property) throw new BadRequestError('Property not found or not owned by you');
     if (!property.isAvailable) throw new BadRequestError('Property already occupied');
 
-    const guest = await guestRepo.findOne({
-        where: { id: guestId }
-    });
-
-    if (!guest) throw new BadRequestError('Guest not found');
-
     const door = property.door;
-
     if (!door) throw new BadRequestError('No door attached to this property');
 
+    // Load guest and ensure they belong to this property
+    const guest = await guestRepo.findOne({
+        where: {
+            id: guestId,
+            property: { id: propertyId }
+        },
+        relations: ['property'] // ensure guest.property is loaded
+    });
+
+    if (!guest) throw new BadRequestError('Guest not associated with this property');
+
+    // Expire any existing active PINs for this door
+    await pinRepo.update(
+      { door: { id: door.id }, status: 'ACTIVE' },
+      { status: 'EXPIRED' }
+    );
+
+    // Generate new secure PIN
     const pinCode = pinGenerator();
 
     const validFrom = new Date();
-    const validUntil = new Date(Date.now() + 5 * 60 * 1000);
+    const validUntil = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
+    // Create access pin using fully loaded entity objects
     const accessPin = pinRepo.create({
         pinCode,
         property,
@@ -182,13 +196,16 @@ export const approveLetting = async (req: IExtendedRequest, res: Response) => {
 
     await pinRepo.save(accessPin);
 
+    // Mark property as unavailable
     property.isAvailable = false;
     await propertyRepo.save(property);
 
     return res.status(200).json({
-        message: 'Property approved and access pin generated',
-        pin: pinCode,
-        validUntil
+        message: 'Property approved and access PIN generated',
+        data: {
+            pin: pinCode,
+            validUntil
+        }
     });
 };
 

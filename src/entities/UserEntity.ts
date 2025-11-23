@@ -25,9 +25,6 @@ export class User {
   @OneToMany(() => Property, (property) => property.owner)
   properties: Property[];
 
-  @OneToMany(() => AccessPin, (pin) => pin.guest)
-  accessPins: AccessPin[];
-
   @CreateDateColumn()
   createdAt: Date;
 }

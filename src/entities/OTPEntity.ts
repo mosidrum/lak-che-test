@@ -1,6 +1,12 @@
 import {Column, Entity, ManyToOne, PrimaryGeneratedColumn} from "typeorm";
 import {Guest} from "./GuestEntity";
 
+export enum OtpStatus {
+    UNUSED = 'unused',
+    USED = 'used',
+    EXPIRED = 'expired'
+}
+
 @Entity()
 export class Otp {
     @PrimaryGeneratedColumn()
@@ -9,8 +15,8 @@ export class Otp {
     @Column()
     code: string;
 
-    @Column({ default: 'UNUSED' })
-    status: 'UNUSED' | 'USED' | 'EXPIRED';
+    @Column({ default: OtpStatus.UNUSED })
+    status: OtpStatus
 
     @ManyToOne(() => Guest, guest => guest.otps)
     guest: Guest;
