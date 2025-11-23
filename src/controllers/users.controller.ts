@@ -4,7 +4,7 @@ import {AccessPinRepository, DoorRepository, GuestRepository, PropertyRepository
 import {IExtendedRequest} from "../middleware";
 import QRCode from "qrcode";
 import {pinGenerator} from "../utils";
-import {sendWhatsAppMessage} from "../services";
+import {createVideoRoom, sendWhatsAppMessage} from "../services";
 import AppDataSource from "../database/data-source";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -151,7 +151,7 @@ export const addGuestToProperty = async (req: IExtendedRequest, res: Response) =
 };
 
 export const approveGuest = async (req: IExtendedRequest, res: Response) => {
-    const { propertyId, guestId } = req.body;
+    const { propertyId, phoneNumber } = req.body;
     const ownerId = req.user.id;
 
     await AppDataSource.transaction(async () => {
@@ -163,34 +163,70 @@ export const approveGuest = async (req: IExtendedRequest, res: Response) => {
             where: { id: propertyId, owner: { id: ownerId } },
             relations: ['door']
         });
+
         if (!property) throw new BadRequestError('Property not found or not owned by you');
 
         const door = property.door;
         if (!door) throw new BadRequestError('No door attached to this property');
 
         const guest = await guestRepo.findOne({
-            where: { id: guestId, property: { id: propertyId } },
+            where: { phoneNumber, property: { id: propertyId } },
             relations: ['property']
         });
-        if (!guest) throw new BadRequestError('Guest not associated with this property');
 
-        await pinRepo.update({ door: { id: door.id }, status: 'ACTIVE' }, { status: 'EXPIRED' });
+        if (!guest) {
+            if (!phoneNumber) {
+                throw new BadRequestError('Phone number required to initiate verification call');
+            }
+
+            const roomName = `verify-${propertyId}-${Date.now()}`;
+
+            await createVideoRoom(roomName);
+
+            const ownerMessage = `
+A guest is requesting access to ${property.name}.
+A video verification call has been initiated.
+Room: ${roomName}
+      `;
+
+            await sendWhatsAppMessage(phoneNumber, ownerMessage);
+
+            res.status(200).json({
+                message: 'Guest not found. Video verification initiated.',
+                data: { verificationRoom: roomName }
+            });
+
+            return;
+        }
+
+
+        await pinRepo.update(
+          { door: { id: door.id }, status: 'ACTIVE' },
+          { status: 'EXPIRED' }
+        );
 
         const pinCode = pinGenerator();
         const validFrom = new Date();
         const validUntil = new Date(Date.now() + 5 * 60 * 1000);
 
         const accessPin = pinRepo.create({
-            pinCode, property, guest, door, validFrom, validUntil, status: 'ACTIVE'
+            pinCode,
+            property,
+            guest,
+            door,
+            validFrom,
+            validUntil,
+            status: 'ACTIVE'
         });
+
         await pinRepo.save(accessPin);
 
-        await propertyRepo.save(property);
+        const message = `✅ Access Approved!
+Property: ${property.name}
+PIN: ${pinCode}
+Expires: ${validUntil.toLocaleTimeString()}`;
 
-        if (guest.phoneNumber) {
-            const message = `Hello! Your access PIN for ${property.name} is ${pinCode}. It expires at ${validUntil.toLocaleTimeString()}.`;
-            await sendWhatsAppMessage(guest.phoneNumber, message);
-        }
+        await sendWhatsAppMessage(guest.phoneNumber, message);
 
         res.status(200).json({
             message: 'Guest approved and access PIN generated',

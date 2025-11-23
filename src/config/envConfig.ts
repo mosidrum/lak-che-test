@@ -14,9 +14,12 @@ type EnvConfig = {
     NODE_ENV: string;
     LOG_LEVEL: string;
     JWT_SECRET: string;
-    TWILIO_SID: string;
+    TWILIO_ACCOUNT_SID: string;
     TWILIO_AUTH_TOKEN: string;
     TWILIO_PHONE_NUMBER: string;
+    TWILIO_API_KEY_SID: string;
+    TWILIO_API_SECRET: string;
+    FRONTEND_URL: string;
 };
 
 type ENV = Partial<EnvConfig> & {
@@ -37,9 +40,12 @@ const getConfig = (): ENV => ({
     NODE_ENV: process.env.NODE_ENV,
     LOG_LEVEL: process.env.LOG_LEVEL,
     JWT_SECRET: process.env.JWT_SECRET,
-    TWILIO_SID: process.env.TWILIO_SID,
+    TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID,
     TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN,
     TWILIO_PHONE_NUMBER: process.env.TWILIO_PHONE_NUMBER,
+    TWILIO_API_KEY_SID: process.env.TWILIO_API_KEY_SID,
+    TWILIO_API_SECRET: process.env.TWILIO_API_SECRET,
+    FRONTEND_URL: process.env.FRONTEND_URL
 });
 
 const getSanitizedConfig = (config: ENV): EnvConfig => {

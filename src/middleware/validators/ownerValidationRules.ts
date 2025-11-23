@@ -24,6 +24,5 @@ export const addGuestValidation = [
 
 export const approvePropertyValidation = [
     body('propertyId').notEmpty().withMessage('Property ID is required').isUUID().withMessage('Property ID must be a valid UUID').isString().withMessage('Property ID must be a string'),
-    body('guestId').notEmpty().withMessage('Guest ID is required').isUUID().withMessage('Guest ID must be a valid UUID').isString().withMessage('Guest ID must be a string')
+    body('phoneNumber').notEmpty().withMessage('Phone number is required').isString().withMessage('Phone number must be a string')
 ]
-
