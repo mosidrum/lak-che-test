@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import usersRoutes from './users.route';
-import ownersRoutes from './owner.route';
+import guestRoutes from './guest.route';
 
 const router = Router();
 
 router.use('/user', usersRoutes);
-router.use('/owner', ownersRoutes);
+router.use('/guest', guestRoutes);
 
 export default router;

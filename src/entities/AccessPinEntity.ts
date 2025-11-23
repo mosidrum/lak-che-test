@@ -7,6 +7,7 @@ import {
 import {User} from "./UserEntity";
 import {Property} from "./PropertyEntity";
 import {Door} from "./DoorEntity";
+import {Guest} from "./GuestEntity";
 
 @Entity()
 export class AccessPin {
@@ -17,7 +18,7 @@ export class AccessPin {
     pinCode: string;
 
     @ManyToOne(() => User, (user) => user.accessPins)
-    guest: User;
+    guest: Guest;
 
     @ManyToOne(() => Property)
     property: Property;

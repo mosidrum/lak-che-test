@@ -1,8 +1,7 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
 import dotenv from "dotenv";
-import {AccessPin, Door, Property, User} from "../entities";
-import {CallLog} from "../entities/CallLogEntity";
+import {AccessPin, Door, Guest, Otp, Property, User, CallLog} from "../entities";
 
 dotenv.config();
 
@@ -15,7 +14,7 @@ const AppDataSource = new DataSource({
   database: process.env.DB_DATABASE,
   synchronize: true,
   logging: false,
-  entities: [User, Door, AccessPin, CallLog, Property],
+  entities: [User, Door, AccessPin, CallLog, Property, Guest, Otp],
   migrations: [],
   subscribers: [],
 });

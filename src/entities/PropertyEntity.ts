@@ -2,11 +2,12 @@ import {
     Entity,
     PrimaryGeneratedColumn,
     Column,
-    ManyToOne, OneToMany,
+    ManyToOne, OneToMany, OneToOne,
 } from 'typeorm';
 import {CallLog} from "./CallLogEntity";
 import {User} from "./UserEntity";
 import {Door} from "./DoorEntity";
+import {Guest} from "./GuestEntity";
 
 
 @Entity()
@@ -32,9 +33,12 @@ export class Property {
     @ManyToOne(() => User, (user) => user.properties)
     owner: User;
 
-    @OneToMany(() => Door, (door) => door.property)
-    doors: Door[];
+    @OneToOne(() => Door, (door) => door.property)
+    door: Door;
 
     @OneToMany(() => CallLog, (call) => call.property)
     callLogs: CallLog[];
+
+    @OneToMany(() => Guest, guest => guest.property)
+    guests: Guest[];
 }

@@ -2,7 +2,7 @@ import {
     Entity,
     PrimaryGeneratedColumn,
     Column,
-    ManyToOne, OneToMany
+    OneToMany, OneToOne, JoinColumn
 } from 'typeorm';
 import {Property} from "./PropertyEntity";
 import {AccessPin} from "./AccessPinEntity";
@@ -18,7 +18,11 @@ export class Door {
     @Column()
     lockId: string;
 
-    @ManyToOne(() => Property, (property) => property.doors)
+    @Column({ default: false })
+    hasBeenOpened: boolean;
+
+    @OneToOne(() => Property, (property) => property.door, { onDelete: 'CASCADE' })
+    @JoinColumn()
     property: Property;
 
     @OneToMany(() => AccessPin, (pin) => pin.door)
