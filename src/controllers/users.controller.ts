@@ -4,9 +4,11 @@ import {AccessPinRepository, DoorRepository, GuestRepository, PropertyRepository
 import {IExtendedRequest} from "../middleware";
 import QRCode from "qrcode";
 import {pinGenerator} from "../utils";
-import { sendWhatsAppMessage} from "../services";
+import { SeamService, sendWhatsAppMessage} from "../services";
 import AppDataSource from "../database/data-source";
 import { v4 as uuidv4 } from 'uuid';
+
+const seamService = new SeamService();
 
 
 export const register = async (req: Request, res: Response) => {
@@ -131,7 +133,10 @@ export const addGuestToProperty = async (req: IExtendedRequest, res: Response) =
     const propertyRepository = new PropertyRepository();
     const guestRepository = new GuestRepository();
 
-    const property = await propertyRepository.findById(propertyId);
+    const property = await propertyRepository.findOne({
+        where: { id: propertyId },
+        relations: ['door']
+    });
     if (!property) throw new BadRequestError('Property not found');
 
     let guest = await guestRepository.findOne({
@@ -144,9 +149,17 @@ export const addGuestToProperty = async (req: IExtendedRequest, res: Response) =
         guest = await guestRepository.save(guest);
     }
 
+    const seamCodes =
+      property.door?.lockId
+          ? await seamService.listAccessCodes(property.door.lockId)
+          : [];
+
     res.status(HTTP_STATUS.CREATED).json({
         message: 'Guest added to property successfully',
-        data: { guest: { id: guest.id, phoneNumber: guest.phoneNumber } }
+        data: {
+            guest: { id: guest.id, phoneNumber: guest.phoneNumber },
+            seamAccessCodes: seamCodes
+        }
     });
 };
 
@@ -168,6 +181,7 @@ export const approveGuest = async (req: IExtendedRequest, res: Response) => {
 
         const door = property.door;
         if (!door) throw new BadRequestError('No door attached to this property');
+        if (!door.lockId) throw new BadRequestError('Door is not linked to a Seam device');
 
         const guest = await guestRepo.findOne({
             where: { phoneNumber, property: { id: propertyId } },
@@ -197,9 +211,17 @@ export const approveGuest = async (req: IExtendedRequest, res: Response) => {
           { status: 'EXPIRED' }
         );
 
-        const pinCode = pinGenerator();
         const validFrom = new Date();
         const validUntil = new Date(Date.now() + 5 * 60 * 1000);
+
+        const seamAccessCode = await seamService.createAccessCode({
+            deviceId: door.lockId,
+            name: `${guest.phoneNumber}-${property.name}`,
+            startsAt: validFrom.toISOString(),
+            endsAt: validUntil.toISOString()
+        });
+
+        const pinCode = seamAccessCode.code ?? pinGenerator();
 
         const accessPin = pinRepo.create({
             pinCode,
@@ -208,7 +230,8 @@ export const approveGuest = async (req: IExtendedRequest, res: Response) => {
             door,
             validFrom,
             validUntil,
-            status: 'ACTIVE'
+            status: 'ACTIVE',
+            seamAccessCodeId: seamAccessCode.access_code_id
         });
 
         await pinRepo.save(accessPin);
@@ -222,7 +245,7 @@ Expires: ${validUntil.toLocaleTimeString()}`;
 
         res.status(200).json({
             message: 'Guest approved and access PIN generated',
-            data: { pin: pinCode, validUntil }
+            data: { pin: pinCode, validUntil, seamAccessCodeId: seamAccessCode.access_code_id }
         });
     });
 };

@@ -20,6 +20,8 @@ type EnvConfig = {
     TWILIO_API_KEY_SID: string;
     TWILIO_API_SECRET: string;
     FRONTEND_URL: string;
+    SEAM_API_KEY: string;
+    SEAM_BASE_URL: string;
 };
 
 type ENV = Partial<EnvConfig> & {
@@ -45,7 +47,9 @@ const getConfig = (): ENV => ({
     TWILIO_PHONE_NUMBER: process.env.TWILIO_PHONE_NUMBER,
     TWILIO_API_KEY_SID: process.env.TWILIO_API_KEY_SID,
     TWILIO_API_SECRET: process.env.TWILIO_API_SECRET,
-    FRONTEND_URL: process.env.FRONTEND_URL
+    FRONTEND_URL: process.env.FRONTEND_URL,
+    SEAM_API_KEY: process.env.SEAM_API_KEY,
+    SEAM_BASE_URL: process.env.SEAM_BASE_URL ?? 'https://connect.getseam.com'
 });
 
 const getSanitizedConfig = (config: ENV): EnvConfig => {

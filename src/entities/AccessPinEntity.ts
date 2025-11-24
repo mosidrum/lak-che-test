@@ -33,5 +33,8 @@ export class AccessPin {
 
     @Column({ type: 'enum', enum: ['ACTIVE', 'EXPIRED'] })
     status: 'ACTIVE' | 'EXPIRED';
+
+    @Column({ nullable: true })
+    seamAccessCodeId?: string;
 }
 
