@@ -4,7 +4,7 @@ import {AccessPinRepository, DoorRepository, GuestRepository, PropertyRepository
 import {IExtendedRequest} from "../middleware";
 import QRCode from "qrcode";
 import {pinGenerator} from "../utils";
-import { createVideoRoom, sendWhatsAppMessage} from "../services";
+import { sendWhatsAppMessage} from "../services";
 import AppDataSource from "../database/data-source";
 import { v4 as uuidv4 } from 'uuid';
 
